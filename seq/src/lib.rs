@@ -1,10 +1,6 @@
-extern crate proc_macro;
+use proc_macro_hack::proc_macro_hack;
 
-use proc_macro::TokenStream;
+#[proc_macro_hack]
+pub use seq_impl::eseq;
 
-#[proc_macro]
-pub fn seq(input: TokenStream) -> TokenStream {
-    let _ = input;
-
-    unimplemented!()
-}
+pub use seq_impl::seq;
