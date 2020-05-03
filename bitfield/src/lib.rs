@@ -10,6 +10,103 @@
 //
 // From the perspective of a user of this crate, they get all the necessary APIs
 // (macro, trait, struct) through the one bitfield crate.
-pub use bitfield_impl::bitfield;
+use bitfield_impl::declare_types;
+pub use bitfield_impl::{bitfield, BitfieldSpecifier};
 
-// TODO other things
+pub trait Specifier
+where
+    Self: Sized,
+{
+    const BITS: usize;
+    type OutsideRepr;
+
+    fn try_from(value: u64) -> Option<Self::OutsideRepr>;
+}
+
+impl Specifier for bool {
+    const BITS: usize = 1;
+    type OutsideRepr = Self;
+
+    fn try_from(value: u64) -> Option<Self::OutsideRepr> {
+        match value {
+            0 => Some(false),
+            1 => Some(true),
+            _ => None,
+        }
+    }
+}
+
+pub struct Holder<T>(T);
+
+pub trait BestFit {
+    type Unsigned;
+}
+
+declare_types!();
+
+pub mod checks {
+    pub enum ZeroMod8 {}
+    pub enum OneMod8 {}
+    pub enum TwoMod8 {}
+    pub enum ThreeMod8 {}
+    pub enum FourMod8 {}
+    pub enum FiveMod8 {}
+    pub enum SixMod8 {}
+    pub enum SevenMod8 {}
+
+    pub trait Mod8Name {
+        type Name;
+    }
+
+    impl Mod8Name for crate::Holder<[(); 7]> {
+        type Name = SevenMod8;
+    }
+    impl Mod8Name for crate::Holder<[(); 6]> {
+        type Name = SixMod8;
+    }
+    impl Mod8Name for crate::Holder<[(); 5]> {
+        type Name = FiveMod8;
+    }
+    impl Mod8Name for crate::Holder<[(); 4]> {
+        type Name = FourMod8;
+    }
+    impl Mod8Name for crate::Holder<[(); 3]> {
+        type Name = ThreeMod8;
+    }
+    impl Mod8Name for crate::Holder<[(); 2]> {
+        type Name = TwoMod8;
+    }
+    impl Mod8Name for crate::Holder<[(); 1]> {
+        type Name = OneMod8;
+    }
+    impl Mod8Name for crate::Holder<[(); 0]> {
+        type Name = ZeroMod8;
+    }
+
+    pub trait TotalSizeIsMultipleOfEightBits {}
+
+    impl TotalSizeIsMultipleOfEightBits for ZeroMod8 {}
+
+    pub struct MultipleOfEightBitsSizeRequired<T: TotalSizeIsMultipleOfEightBits>(T);
+
+    impl<T: TotalSizeIsMultipleOfEightBits> MultipleOfEightBitsSizeRequired<T> {}
+
+    pub trait DiscriminantInRange {}
+    pub enum True {}
+    pub enum False {}
+    impl DiscriminantInRange for True {}
+
+    pub trait Bool {
+        type Value;
+    }
+
+    impl Bool for crate::Holder<[(); 0]> {
+        type Value = False;
+    }
+
+    impl Bool for crate::Holder<[(); 1]> {
+        type Value = True;
+    }
+
+    pub struct RequireDiscriminantInRange<T: DiscriminantInRange>(T);
+}
